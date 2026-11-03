@@ -1,0 +1,51 @@
+[project]
+name = "comfyui-nobg"
+description = "ComfyUI nodes for nobg: open-source background removal and image matting."
+version = "0.1.0"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+dependencies = ["nobg>=0.3.1"]
+
+[project.urls]
+Repository = "https://github.com/feyninc/ComfyUI-NoBG"
+
+[tool.comfy]
+PublisherId = "chonk-lain"
+DisplayName = "ComfyUI-NoBG"
+Icon = "https://raw.githubusercontent.com/feyninc/ComfyUI-NoBG/main/assets/icon.png"
+
+[project.optional-dependencies]
+dev = [
+    "numpy",  # tensor-to-image conversions in tests
+    "pillow",  # workflow output validation
+    "pre-commit",  # runs linting on commit
+    "pytest",  # testing
+    "ruff",  # linting
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+# The repository name contains a hyphen, so pytest cannot import the root
+# __init__.py as a normal package. ComfyUI loads it via importlib instead.
+addopts = "--confcutdir=tests"
+testpaths = [
+    "tests",
+]
+
+[tool.ruff]
+line-length = 140
+src = [".", "tests"]
+target-version = "py311"
+
+# Add rules to ban exec/eval
+[tool.ruff.lint]
+select = [
+    "S102",  # exec-builtin
+    "S307",  # eval-used
+    "W293",
+    "F",  # Pyflakes: syntax errors, undefined names, unused imports.
+    # See all rules here: https://docs.astral.sh/ruff/rules/#pyflakes-f
+]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"

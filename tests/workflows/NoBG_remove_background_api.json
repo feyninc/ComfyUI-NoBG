@@ -1,0 +1,61 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "example.png"
+    },
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "2": {
+    "class_type": "NoBGModelLoader",
+    "inputs": {
+      "model": "feyninc/FeyNobg",
+      "architecture": "auto",
+      "device": "auto",
+      "dtype": "auto",
+      "download_to_models_dir": false,
+      "sam3_aggregate": "semantic"
+    },
+    "_meta": {
+      "title": "NoBG Model Loader"
+    }
+  },
+  "3": {
+    "class_type": "NoBGRemoveBackground",
+    "inputs": {
+      "nobg_model": [
+        "2",
+        0
+      ],
+      "image": [
+        "1",
+        0
+      ],
+      "batch_size": 1,
+      "refine_foreground": false,
+      "refine_radius": 90,
+      "keep_model_loaded": true,
+      "prompt": "",
+      "boxes": "",
+      "score_threshold": -1.0
+    },
+    "_meta": {
+      "title": "NoBG Remove Background"
+    }
+  },
+  "4": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "3",
+        0
+      ],
+      "filename_prefix": "ComfyUI"
+    },
+    "_meta": {
+      "title": "Save Image"
+    }
+  }
+}

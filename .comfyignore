@@ -1,0 +1,8 @@
+# Dev-only files kept out of the registry package (.gitignore entries are excluded too).
+.github/
+tests/
+.pre-commit-config.yaml
+.editorconfig
+# Defense in depth: never publish local credentials, even if accidentally tracked.
+.env
+.env.*

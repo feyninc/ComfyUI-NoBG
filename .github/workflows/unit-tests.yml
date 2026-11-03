@@ -1,0 +1,44 @@
+name: Unit tests
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    env:
+      PYTHONIOENCODING: "utf8"
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.11"]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        # CPU-only torch keeps the job small; comfy, folder_paths and nobg are stubbed in tests/conftest.py.
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install numpy pillow pytest ruff
+      - name: Run Linting
+        run: |
+          ruff check .
+      - name: Run Tests
+        run: |
+          pytest tests/

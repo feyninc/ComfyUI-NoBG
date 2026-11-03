@@ -1,0 +1,58 @@
+name: Test example workflow
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-example-workflow-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run-workflow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONIOENCODING: utf8
+      HF_HUB_DISABLE_TELEMETRY: "1"
+      # Avoid CPU oversubscription on shared runners.
+      OMP_NUM_THREADS: "2"
+      MKL_NUM_THREADS: "2"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: node
+          persist-credentials: false
+      - name: Check out ComfyUI
+        uses: actions/checkout@v4
+        with:
+          repository: Comfy-Org/ComfyUI
+          ref: 4d988b647853f587173728cfda163d1f77501102
+          path: ComfyUI
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install CPU dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          pip install -r ComfyUI/requirements.txt -r node/requirements.txt
+      - name: Install custom nodes
+        run: ln -s "$GITHUB_WORKSPACE/node" "$GITHUB_WORKSPACE/ComfyUI/custom_nodes/ComfyUI-NoBG"
+      - name: Run API workflow and validate transparent PNG
+        run: python node/tests/run_workflow.py --comfyui ComfyUI --output artifacts
+      - name: Upload output and diagnostic logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nobg-workflow-results
+          path: artifacts/
+          if-no-files-found: warn
