@@ -12,7 +12,7 @@ Repository = "https://github.com/feyninc/ComfyUI-NoBG"
 [tool.comfy]
 PublisherId = "chonk-lain"
 DisplayName = "ComfyUI-NoBG"
-Icon = "https://raw.githubusercontent.com/feyninc/ComfyUI-NoBG/main/assets/icon.png"
+Icon = "https://raw.githubusercontent.com/feyninc/nobg/main/assets/feyn_mark.png"
 
 [project.optional-dependencies]
 dev = [
