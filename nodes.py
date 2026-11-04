@@ -126,32 +126,6 @@ class NoBGModelLoader:
         return {
             "required": {
                 "model": (list(PRESETS) + _local_models(), {"default": "feyninc/FeyNobg"}),
-                "architecture": (
-                    ("auto",) + ARCHITECTURES,
-                    {"default": "auto", "tooltip": "Override when 'auto' guesses a local folder wrong."},
-                ),
-                "device": (("auto", "cuda", "cpu", "mps"), {"default": "auto"}),
-                "dtype": (
-                    ("auto",) + tuple(DTYPES),
-                    {"default": "auto", "tooltip": "'auto' keeps the checkpoint's own dtype."},
-                ),
-            },
-            "optional": {
-                "download_to_models_dir": (
-                    "BOOLEAN",
-                    {
-                        "default": False,
-                        "tooltip": "Download Hub repos into models/nobg instead of the Hugging Face cache.",
-                    },
-                ),
-                "sam3_aggregate": (
-                    ("semantic", "max", "mean"),
-                    {
-                        "default": "semantic",
-                        "tooltip": "SAM3 only. 'semantic' gives the sharpest matte; 'max'/'mean' build it "
-                        "from instance masks and respect score_threshold.",
-                    },
-                ),
             },
         }
 
@@ -160,7 +134,8 @@ class NoBGModelLoader:
     FUNCTION = "load"
     CATEGORY = "NoBG"
 
-    def load(self, model, architecture, device, dtype, download_to_models_dir=False, sam3_aggregate="semantic"):
+    # Retain legacy Python arguments for direct callers, not as ComfyUI widgets.
+    def load(self, model, architecture="auto", device="auto", dtype="auto", download_to_models_dir=False, sam3_aggregate="semantic"):
         if model.startswith(LOCAL_PREFIX):
             name = model[len(LOCAL_PREFIX):]
             source = _resolve_local(name)
@@ -195,15 +170,9 @@ class NoBGRemoveBackground:
             "required": {
                 "nobg_model": ("NOBG_MODEL",),
                 "image": ("IMAGE",),
-                "batch_size": ("INT", {"default": 1, "min": 1, "max": 64, "tooltip": "Images per forward pass."}),
                 "refine_foreground": (
                     "BOOLEAN",
                     {"default": False, "tooltip": "Unmix the old background from soft edges (hair, fur) to remove halos."},
-                ),
-                "refine_radius": ("INT", {"default": 90, "min": 1, "max": 512}),
-                "keep_model_loaded": (
-                    "BOOLEAN",
-                    {"default": True, "tooltip": "Leave the model on the GPU after running."},
                 ),
             },
             "optional": {
@@ -213,24 +182,6 @@ class NoBGRemoveBackground:
                         "default": "",
                         "multiline": True,
                         "tooltip": "SAM3 only: what to cut out. Empty uses the model's default prompt.",
-                    },
-                ),
-                "boxes": (
-                    "STRING",
-                    {
-                        "default": "",
-                        "multiline": True,
-                        "tooltip": "SAM3 only: x1,y1,x2,y2 boxes in pixels, one per line, applied to every image.",
-                    },
-                ),
-                "score_threshold": (
-                    "FLOAT",
-                    {
-                        "default": -1.0,
-                        "min": -1.0,
-                        "max": 1.0,
-                        "step": 0.01,
-                        "tooltip": "SAM3 with 'max'/'mean' aggregate only. -1 uses the model config.",
                     },
                 ),
             },
@@ -250,10 +201,10 @@ class NoBGRemoveBackground:
         self,
         nobg_model: NoBGModel,
         image,
-        batch_size,
-        refine_foreground,
-        refine_radius,
-        keep_model_loaded,
+        batch_size=1,
+        refine_foreground=False,
+        refine_radius=90,
+        keep_model_loaded=False,
         prompt="",
         boxes="",
         score_threshold=-1.0,

@@ -1,13 +1,17 @@
 [project]
 name = "comfyui-nobg"
 description = "ComfyUI nodes for nobg: open-source background removal and image matting."
-version = "0.1.1"
+version = "0.1.2"
+readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.11"
 dependencies = ["nobg>=0.3.1"]
 
 [project.urls]
 Repository = "https://github.com/feyninc/ComfyUI-NoBG"
+Documentation = "https://github.com/feyninc/ComfyUI-NoBG#readme"
+Issues = "https://github.com/feyninc/ComfyUI-NoBG/issues"
+Registry = "https://registry.comfy.org/publishers/chonk-lain/nodes/comfyui-nobg"
 
 [tool.comfy]
 PublisherId = "chonk-lain"

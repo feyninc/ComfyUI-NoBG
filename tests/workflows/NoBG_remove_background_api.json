@@ -11,12 +11,7 @@
   "2": {
     "class_type": "NoBGModelLoader",
     "inputs": {
-      "model": "feyninc/FeyNobg",
-      "architecture": "auto",
-      "device": "auto",
-      "dtype": "auto",
-      "download_to_models_dir": false,
-      "sam3_aggregate": "semantic"
+      "model": "feyninc/FeyNobg"
     },
     "_meta": {
       "title": "NoBG Model Loader"
@@ -33,13 +28,8 @@
         "1",
         0
       ],
-      "batch_size": 1,
       "refine_foreground": false,
-      "refine_radius": 90,
-      "keep_model_loaded": true,
-      "prompt": "",
-      "boxes": "",
-      "score_threshold": -1.0
+      "prompt": ""
     },
     "_meta": {
       "title": "NoBG Remove Background"

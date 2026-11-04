@@ -4,6 +4,15 @@ ComfyUI nodes for [nobg](https://github.com/feyninc/nobg), an open-source librar
 
 ## Installation
 
+Install from the [Comfy Registry](https://registry.comfy.org/publishers/chonk-lain/nodes/comfyui-nobg)
+with [comfy-cli](https://github.com/Comfy-Org/comfy-cli):
+
+```bash
+comfy node install comfyui-nobg
+```
+
+Or install manually:
+
 ```bash
 cd ComfyUI/custom_nodes
 git clone https://github.com/feyninc/ComfyUI-NoBG
@@ -19,10 +28,10 @@ Requires Python ≥ 3.11 and `transformers` ≥ 5.5. Uses ComfyUI's existing `to
 Loads a model and outputs `NOBG_MODEL`.
 
 - **model**: a Hub preset, or any folder in `ComfyUI/models/nobg/` (listed as `local: <name>`). A folder needs a `config.json`.
-- **architecture**: `auto` works out the model type from the preset or folder name. If it guesses a local folder wrong, set it yourself.
-- **device** / **dtype**: `auto` uses ComfyUI's device and keeps the checkpoint's own dtype.
-- **download_to_models_dir**: downloads Hub presets into `models/nobg/` instead of the Hugging Face cache.
-- **sam3_aggregate**: SAM3 only. `semantic` gives the sharpest matte. `max` and `mean` build the matte from instance masks.
+
+Device selection follows ComfyUI, the checkpoint keeps its own dtype, and Hub
+models use the Hugging Face cache. Architecture is detected from the preset or
+folder name; include `sam3` in a local SAM3 folder's name. SAM3 uses semantic matting.
 
 ### NoBG Remove Background
 
@@ -34,11 +43,11 @@ Takes `IMAGE` (batches and video frames work) and outputs:
 
 Options:
 
-- **refine_foreground** / **refine_radius**: unmixes leftover background color from soft edges, so you don't get halos when you composite onto a new background.
+- **refine_foreground**: unmixes leftover background color from soft edges to reduce halos, using a radius of 90. Use the separate refinement node if you need a different radius.
 - **prompt**: SAM3 only, e.g. `the dog`. Leave it empty to use the model's default "main subject" prompt.
-- **boxes**: SAM3 only. Write `x1,y1,x2,y2` pixel boxes, one per line. Every image in the batch uses the same boxes.
-- **score_threshold**: SAM3 with the `max`/`mean` aggregate only. `-1` uses the model's config value.
-- **keep_model_loaded**: turn this off to move the model off the GPU after each run.
+
+Batches and video frames are processed one image at a time to limit memory use.
+The model moves to ComfyUI's offload device after inference.
 
 ### NoBG Refine Foreground
 
@@ -55,6 +64,19 @@ NoBG Model Loader┘
 Open a workflow from [`example_workflows/`](example_workflows/) in ComfyUI's
 template browser and choose your image in **Load Image**. For SAM3, set the prompt
 to the subject you want to cut out, such as `the dog`.
+
+## Upgrading to 0.1.2
+
+The loader now shows only model selection. Background removal keeps only the
+foreground-refinement toggle and optional SAM3 text prompt; hardware overrides,
+batch-size tuning, download location, refinement radius, model-retention, boxes,
+and SAM3 aggregation/threshold widgets have been removed.
+
+Node names and output slots are unchanged, but old widget values may not map
+correctly to the trimmed inputs. Re-create the loader and removal nodes in older
+workflows (or start from the updated examples), reconnect them, and check the
+refinement toggle and prompt before running. Removed API inputs no longer configure
+execution through ComfyUI.
 
 ## Contributing
 

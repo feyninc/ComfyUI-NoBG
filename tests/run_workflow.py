@@ -89,7 +89,6 @@ def run(comfyui, output, timeout, image_path=None, device="cpu", extended=False,
 
             workflow = json.loads((HERE / "workflows" / "NoBG_remove_background_api.json").read_text())
             workflow["1"]["inputs"]["image"] = image_name
-            workflow["2"]["inputs"].update(device=device, dtype="fp32")
             workflow["4"]["inputs"]["filename_prefix"] = "nobg-ci"
 
             def execute_workflow(graph, label, expected_count=1):
@@ -135,7 +134,7 @@ def run(comfyui, output, timeout, image_path=None, device="cpu", extended=False,
 
             baseline = execute_workflow(workflow, "baseline")[0]
             if extended or sam3:
-                run_additional_checks(workflow, execute_workflow, baseline, extended, sam3, expected_size, output)
+                run_additional_checks(workflow, execute_workflow, baseline, extended, sam3, output)
     finally:
         if process is not None and process.poll() is None:
             process.terminate()
@@ -147,7 +146,7 @@ def run(comfyui, output, timeout, image_path=None, device="cpu", extended=False,
         input_path.unlink(missing_ok=True)
 
 
-def run_additional_checks(workflow, execute_workflow, baseline, extended, sam3, size, output):
+def run_additional_checks(workflow, execute_workflow, baseline, extended, sam3, output):
     import copy
 
     import numpy as np
@@ -156,7 +155,7 @@ def run_additional_checks(workflow, execute_workflow, baseline, extended, sam3, 
     if extended:
         batch = copy.deepcopy(workflow)
         batch["5"] = {"class_type": "ImageBatch", "inputs": {"image1": ["1", 0], "image2": ["1", 0]}}
-        batch["3"]["inputs"].update(image=["5", 0], batch_size=2, keep_model_loaded=False)
+        batch["3"]["inputs"].update(image=["5", 0])
         images = execute_workflow(batch, "birefnet-batch-offload", expected_count=2)
         delta = max(int(np.abs(np.asarray(image).astype(int) - np.asarray(baseline).astype(int)).max()) for image in images)
         if delta > 2:
@@ -164,7 +163,7 @@ def run_additional_checks(workflow, execute_workflow, baseline, extended, sam3, 
         checks["batch_max_pixel_difference"] = delta
 
         refined = copy.deepcopy(workflow)
-        refined["3"]["inputs"].update(refine_foreground=True, refine_radius=90)
+        refined["3"]["inputs"].update(refine_foreground=True)
         integrated = execute_workflow(refined, "birefnet-refined")[0]
         standalone = copy.deepcopy(workflow)
         standalone["5"] = {
@@ -184,8 +183,8 @@ def run_additional_checks(workflow, execute_workflow, baseline, extended, sam3, 
 
     if sam3:
         graph = copy.deepcopy(workflow)
-        graph["2"]["inputs"].update(model="facebook/sam3", sam3_aggregate="semantic")
-        graph["3"]["inputs"].update(prompt="the dog", keep_model_loaded=False)
+        graph["2"]["inputs"].update(model="facebook/sam3")
+        graph["3"]["inputs"].update(prompt="the dog")
         dog = execute_workflow(graph, "sam3-dog")[0]
         graph["3"]["inputs"]["prompt"] = "the grass"
         grass = execute_workflow(graph, "sam3-grass")[0]
@@ -193,18 +192,11 @@ def run_additional_checks(workflow, execute_workflow, baseline, extended, sam3, 
         if difference < 5:
             raise RuntimeError(f"Dog and grass prompts produced nearly identical masks: mean delta {difference}")
         checks["sam3_prompt_mean_alpha_difference"] = difference
-        graph["3"]["inputs"].update(prompt="the dog", boxes=f"{size[0]*0.05},{size[1]*0.02},{size[0]*0.95},{size[1]*0.98}")
-        execute_workflow(graph, "sam3-text-box")
         graph["3"]["inputs"]["prompt"] = ""
-        execute_workflow(graph, "sam3-box-only")
-        graph["3"]["inputs"].update(prompt="", boxes="")
         execute_workflow(graph, "sam3-default-prompt")
-        graph["3"]["inputs"].update(prompt="the dog", batch_size=2, image=["5", 0])
+        graph["3"]["inputs"].update(prompt="the dog", image=["5", 0])
         graph["5"] = {"class_type": "ImageBatch", "inputs": {"image1": ["1", 0], "image2": ["1", 0]}}
         execute_workflow(graph, "sam3-batch", expected_count=2)
-        graph["3"]["inputs"].update(image=["1", 0], batch_size=1, score_threshold=0.5)
-        graph["2"]["inputs"]["sam3_aggregate"] = "max"
-        execute_workflow(graph, "sam3-instance-threshold")
 
     (output / "extended-validation.json").write_text(json.dumps(checks, indent=2), encoding="utf-8")
     print(f"Additional checks passed: {json.dumps(checks)}", flush=True)

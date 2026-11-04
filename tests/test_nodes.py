@@ -129,21 +129,13 @@ def test_loader_metadata():
 
 def test_loader_input_types(nobg_paths):
     inputs = NoBGModelLoader.INPUT_TYPES()
-    req, opt = inputs["required"], inputs["optional"]
-    assert list(req) == ["model", "architecture", "device", "dtype"]
-    assert list(opt) == ["download_to_models_dir", "sam3_aggregate"]
+    assert set(inputs) == {"required"}
+    req = inputs["required"]
+    assert list(req) == ["model"]
 
     models, model_opts = req["model"]
     assert models == list(PRESETS)
     assert model_opts["default"] in models
-    assert req["architecture"][0] == ("auto", "birefnet", "sam3")
-    assert req["architecture"][1]["default"] == "auto"
-    assert req["device"][0] == ("auto", "cuda", "cpu", "mps")
-    assert req["dtype"][0] == ("auto", "fp32", "fp16", "bf16")
-    assert opt["download_to_models_dir"][0] == "BOOLEAN"
-    assert opt["download_to_models_dir"][1]["default"] is False
-    assert opt["sam3_aggregate"][0] == ("semantic", "max", "mean")
-    assert opt["sam3_aggregate"][1]["default"] == "semantic"
 
 
 def test_loader_input_types_lists_local_models(nobg_paths):
@@ -161,19 +153,13 @@ def test_remove_background_metadata():
 def test_remove_background_input_types():
     inputs = NoBGRemoveBackground.INPUT_TYPES()
     req, opt = inputs["required"], inputs["optional"]
-    assert list(req) == ["nobg_model", "image", "batch_size", "refine_foreground", "refine_radius", "keep_model_loaded"]
-    assert list(opt) == ["prompt", "boxes", "score_threshold"]
+    assert list(req) == ["nobg_model", "image", "refine_foreground"]
+    assert list(opt) == ["prompt"]
     assert req["nobg_model"] == ("NOBG_MODEL",)
     assert req["image"] == ("IMAGE",)
-    assert req["batch_size"][0] == "INT"
-    assert req["batch_size"][1]["default"] == 1
     assert req["refine_foreground"][0] == "BOOLEAN"
-    assert req["refine_radius"][0] == "INT"
-    assert req["keep_model_loaded"][0] == "BOOLEAN"
+    assert req["refine_foreground"][1]["default"] is False
     assert opt["prompt"][0] == "STRING"
-    assert opt["boxes"][0] == "STRING"
-    assert opt["score_threshold"][0] == "FLOAT"
-    assert opt["score_threshold"][1]["default"] == -1.0
 
 
 def test_refine_foreground_metadata():
@@ -389,7 +375,7 @@ def fake_load(monkeypatch):
 
 
 def test_loader_hub_preset_auto(fake_load, comfy_mocks):
-    (out,) = NoBGModelLoader().load("feyninc/FeyNobg", "auto", "auto", "auto")
+    (out,) = NoBGModelLoader().load("feyninc/FeyNobg")
     fake_load.load.assert_called_once_with("birefnet", "feyninc/FeyNobg", "semantic")
     assert isinstance(out, NoBGModel)
     assert out.architecture == "birefnet"
@@ -456,6 +442,26 @@ def run_remove(model, image, **overrides):
     kwargs = {"batch_size": 1, "refine_foreground": False, "refine_radius": 90, "keep_model_loaded": True}
     kwargs.update(overrides)
     return NoBGRemoveBackground().remove(model, image, **kwargs)
+
+
+def test_remove_minimal_inputs_use_safe_defaults(fake_nobg):
+    model = make_model()
+    image = image_batch(n=2)
+    with mock.patch.object(NoBGModel, "offload") as offload:
+        cutout, foreground, mask = NoBGRemoveBackground().remove(nobg_model=model, image=image)
+    assert cutout.shape == (2, 8, 6, 4)
+    assert torch.equal(foreground, image)
+    assert torch.equal(cutout[..., 3], mask)
+    assert [call["batch_size"] for call in model.model.predict_calls] == [1, 1]
+    offload.assert_called_once()
+    fake_nobg.utils.refine_foreground.assert_not_called()
+
+
+def test_remove_minimal_sam3_inputs():
+    model = make_model("sam3")
+    NoBGRemoveBackground().remove(nobg_model=model, image=image_batch(n=1), refine_foreground=False, prompt="the dog")
+    assert model.model.predict_calls[0]["args"] == ("the dog", None)
+    assert model.model.predict_calls[0]["kwargs"] == {"return_type": "alpha"}
 
 
 def test_remove_birefnet_outputs(comfy_mocks):

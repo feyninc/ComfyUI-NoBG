@@ -53,9 +53,9 @@ def test_extended_runner_checks_batch_and_both_refiners(tmp_path):
         return [baseline.copy()] * expected_count if "batch" in label else [refined.copy()]
 
     workflow = {"3": {"inputs": {}}, "4": {"inputs": {}}}
-    run_additional_checks(workflow, execute, baseline, True, False, (2, 2), tmp_path)
+    run_additional_checks(workflow, execute, baseline, True, False, tmp_path)
     assert len(calls) == 3
-    assert calls[0][1]["3"]["inputs"]["keep_model_loaded"] is False
+    assert calls[0][1]["3"]["inputs"] == {"image": ["5", 0]}
     assert calls[0][2] == 2
     assert calls[1][1]["3"]["inputs"]["refine_foreground"] is True
     assert calls[2][1]["5"]["class_type"] == "NoBGRefineForeground"
@@ -66,4 +66,4 @@ def test_sam3_runner_rejects_ignored_prompts(tmp_path):
     baseline = Image.new("RGBA", (2, 2), (100, 100, 100, 128))
     workflow = {"2": {"inputs": {}}, "3": {"inputs": {}}}
     with pytest.raises(RuntimeError, match="nearly identical masks"):
-        run_additional_checks(workflow, lambda *args: [baseline.copy()], baseline, False, True, (2, 2), tmp_path)
+        run_additional_checks(workflow, lambda *args: [baseline.copy()], baseline, False, True, tmp_path)

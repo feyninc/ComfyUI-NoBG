@@ -49,9 +49,11 @@ python tests/check_compatibility.py --base /path/to/base-checkout --current .
 ```
 
 This is a static contract check, not a complete check of input compatibility or
-runtime behavior. Keep registered node names, input names, and output-slot order
-stable so existing workflows continue to work. Discuss intentional breaking
-changes in the PR.
+runtime behavior. Keep registered node names and output-slot order stable.
+Keep the node UI minimal: prefer automatic hardware/model settings and avoid
+exposing specialized tuning controls in the everyday workflow. Input changes
+need explicit upgrade notes and updated UI/API examples. Version 0.1.2 deliberately
+trims the loader and removal inputs; see the README's upgrade instructions.
 
 ## Real ComfyUI smoke test
 
@@ -97,11 +99,12 @@ For SAM3, accept Meta's model license yourself and authenticate with
 `hf auth login` before downloading gated weights. Never use the registry API
 key as a Hugging Face token.
 
-The extended checks compare single and batched FeyNobg results, exercise model
-offloading, and compare integrated and standalone foreground refinement while
+The extended checks compare single and batched FeyNobg results using automatic
+per-image processing/offloading, and compare integrated and standalone foreground refinement while
 checking that alpha is preserved. SAM3 checks cover dog versus grass text
-prompts, text plus boxes, boxes alone, the default prompt, batching, and instance
-aggregation with a score threshold. Each case writes its own outputs and
+prompts, the default prompt, and batching. Legacy box/aggregation/threshold
+behavior is covered by direct Python unit tests, not the trimmed ComfyUI interface.
+Each case writes its own outputs and
 validation/history JSON. These checks need more memory and time than default CI
 and do not replace visual review across varied photos.
 
@@ -125,7 +128,7 @@ and do not replace visual review across varied photos.
 For a bug report, include:
 
 - Operating system, Python, ComfyUI, PyTorch, and nobg versions.
-- Device and dtype settings, selected model, and relevant node options.
+- ComfyUI device/launch settings, selected model, and relevant node options.
 - Minimal reproduction steps or a small workflow.
 - The traceback and relevant log output, with credentials and personal paths
   removed where appropriate.
@@ -147,6 +150,19 @@ repository remains `feyninc/ComfyUI-NoBG`. Publishing is manual-only through
 and end-to-end checks to pass. Pushes and PRs never publish. Each release needs
 a new semantic version. Coordinate release/version
 changes with maintainers rather than including them in unrelated PRs.
+
+Release checklist:
+
+1. Bump `[project].version` in `pyproject.toml`; keep the
+   dependency list aligned with `requirements.txt`.
+2. Update README upgrade notes and bundled workflows for any input changes.
+   Existing widget arrays are positional, so removing controls can require users
+   to re-create affected nodes even when names and output slots stay unchanged.
+3. Run lint, unit tests, compatibility checks, and the real ComfyUI smoke test.
+4. After checks pass on the release commit, run the manual publishing workflow.
+5. Verify the version on the [registry page](https://registry.comfy.org/publishers/chonk-lain/nodes/comfyui-nobg)
+   and test installation in a separate ComfyUI environment with
+   `comfy node install comfyui-nobg`.
 
 ## License
 

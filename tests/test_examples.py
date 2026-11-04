@@ -45,3 +45,15 @@ def test_registry_icon_meets_size_requirements():
     with Image.open(ROOT / "assets" / "icon.png") as image:
         assert image.width == image.height
         assert image.width <= 400
+
+
+def test_api_workflow_inputs_match_registered_schema():
+    workflow = json.loads((ROOT / "tests" / "workflows" / "NoBG_remove_background_api.json").read_text())
+    for node in workflow.values():
+        cls = NODE_CLASS_MAPPINGS.get(node["class_type"])
+        if cls is None:
+            continue
+        schema = cls.INPUT_TYPES()
+        allowed = {name for section in schema.values() for name in section}
+        assert set(node["inputs"]) <= allowed
+        assert set(schema["required"]) <= set(node["inputs"])

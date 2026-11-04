@@ -50,7 +50,7 @@
       ],
       "size": [
         315,
-        178
+        82
       ],
       "flags": {},
       "order": 1,
@@ -71,12 +71,7 @@
         "cnr_id": "comfyui-nobg"
       },
       "widgets_values": [
-        "feyninc/FeyNobg",
-        "auto",
-        "auto",
-        "auto",
-        false,
-        "semantic"
+        "feyninc/FeyNobg"
       ]
     },
     {
@@ -88,7 +83,7 @@
       ],
       "size": [
         340,
-        330
+        200
       ],
       "flags": {},
       "order": 2,
@@ -134,13 +129,8 @@
         "cnr_id": "comfyui-nobg"
       },
       "widgets_values": [
-        1,
         false,
-        90,
-        true,
-        "",
-        "",
-        -1.0
+        ""
       ]
     },
     {
