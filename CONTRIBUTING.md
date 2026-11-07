@@ -100,12 +100,12 @@ For SAM3, accept Meta's model license yourself and authenticate with
 key as a Hugging Face token.
 
 The extended checks compare single and batched FeyNobg results using automatic
-per-image processing/offloading, and compare integrated and standalone foreground refinement while
-checking that alpha is preserved. SAM3 checks cover dog versus grass text
+per-image processing and offloading. They also compare integrated and standalone
+foreground refinement and check that alpha is preserved. SAM3 checks cover dog versus grass text
 prompts, the default prompt, and batching. Legacy box/aggregation/threshold
 behavior is covered by direct Python unit tests, not the trimmed ComfyUI interface.
-Each case writes its own outputs and
-validation/history JSON. These checks need more memory and time than default CI
+Each case writes its own outputs, validation JSON, and execution history.
+These checks need more memory and time than default CI
 and do not replace visual review across varied photos.
 
 ## Code and examples
@@ -151,6 +151,11 @@ and end-to-end checks to pass. Pushes and PRs never publish. Each release needs
 a new semantic version. Coordinate release/version
 changes with maintainers rather than including them in unrelated PRs.
 
+Registry versions cannot be overwritten. If publishing reports
+`The node version already exists`, choose a new, unused version in
+`pyproject.toml`. Put that change on the release branch, then start a new workflow
+run. Re-running an old run uses its original commit and version.
+
 Release checklist:
 
 1. Bump `[project].version` in `pyproject.toml`; keep the
@@ -160,9 +165,22 @@ Release checklist:
    to re-create affected nodes even when names and output slots stay unchanged.
 3. Run lint, unit tests, compatibility checks, and the real ComfyUI smoke test.
 4. After checks pass on the release commit, run the manual publishing workflow.
-5. Verify the version on the [registry page](https://registry.comfy.org/publishers/chonk-lain/nodes/comfyui-nobg)
-   and test installation in a separate ComfyUI environment with
-   `comfy node install comfyui-nobg`.
+5. Verify the version and its status on the [registry page](https://registry.comfy.org/publishers/chonk-lain/nodes/comfyui-nobg).
+   The [registry version API](https://api.comfy.org/nodes/comfyui-nobg/versions)
+   also reports each version's status. Resolve a flagged release with the registry
+   before recommending it to users.
+6. Test a fresh installation in a separate ComfyUI environment with
+   `comfy node install comfyui-nobg`. Separately test an upgrade from the previous
+   release with `comfy node update comfyui-nobg`. Check the selected installation
+   with `comfy which`, or pass `--workspace /path/to/ComfyUI` before `node`.
+7. Restart the test ComfyUI backend to apply any queued update, then run a
+   background-removal workflow. Check
+   that the saved PNG has transparency and that older workflows follow the
+   README's upgrade instructions.
+
+Keep development checkouts separate from registry installations. Link your clone
+into a test installation for unreleased changes. Do not run the registry updater
+over that link or install a second copy of this pack beside it.
 
 ## License
 

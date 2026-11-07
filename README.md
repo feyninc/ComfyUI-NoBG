@@ -11,6 +11,9 @@ with [comfy-cli](https://github.com/Comfy-Org/comfy-cli):
 comfy node install comfyui-nobg
 ```
 
+Run `comfy which` to check the selected ComfyUI workspace. To target another
+installation, use `comfy --workspace /path/to/ComfyUI node install comfyui-nobg`.
+
 Or install manually:
 
 ```bash
@@ -20,6 +23,36 @@ pip install -r ComfyUI-NoBG/requirements.txt
 ```
 
 Requires Python ≥ 3.11 and `transformers` ≥ 5.5. Uses ComfyUI's existing `torch` and `torchvision` installation.
+
+Restart ComfyUI after installation so it loads the new nodes.
+
+## Update an existing installation
+
+If you installed with `comfy node install comfyui-nobg`, update that node pack with:
+
+```bash
+comfy node update comfyui-nobg
+```
+
+This targets the selected ComfyUI workspace. To choose another installation, use
+`comfy --workspace /path/to/ComfyUI node update comfyui-nobg`.
+Do not use `comfy update` for this task. That command updates ComfyUI or comfy-cli,
+not this node pack.
+
+For a manual Git installation, keep your local changes before updating, then run:
+
+```bash
+cd ComfyUI/custom_nodes/ComfyUI-NoBG
+git pull --ff-only
+python -m pip install -r requirements.txt
+```
+
+Updates can change shared Python dependencies. Use ComfyUI's Python environment
+for a manual dependency installation.
+
+Manager may queue the update until the next backend startup. Restart the ComfyUI
+backend, not just the browser tab, then follow the
+[0.1.2 upgrade notes](#upgrading-to-012) for older workflows.
 
 ## Nodes
 
